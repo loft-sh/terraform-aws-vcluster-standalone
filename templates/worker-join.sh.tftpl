@@ -1,16 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-exec > >(tee /var/log/vcluster-bootstrap.log | logger -t user-data -s 2>/dev/console) 2>&1
-
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates
-
-# Ensure Session Manager access works on the private instances.
-snap install amazon-ssm-agent --classic || true
-systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
-systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
-
 JOIN_URL="https://${load_balancer_dns}/node/join?token=${cluster_join_token}&type=worker"
 
 for attempt in $(seq 1 300); do

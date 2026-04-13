@@ -234,7 +234,7 @@ terraform output -raw cluster_join_token
 - Public exposure is limited to the NLB listener on `443`, constrained by `allowed_public_cidrs`.
 - Internal node-to-node traffic is allowed within the VPC CIDR.
 - Outbound internet access is allowed from the nodes so they can download packages and the standalone installer.
-- SSM agent installation is handled in `user_data`.
+- The bootstrap scripts ensure SSM Agent is running. On Ubuntu 22.04 it is typically preinstalled already, so the scripts only install it if missing.
 
 ## Operational Notes
 
