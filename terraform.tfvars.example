@@ -1,0 +1,22 @@
+aws_region                 = "eu-central-1"
+project_name               = "vcluster-standalone"
+availability_zone_count    = 2
+vpc_cidr                   = "10.0.0.0/16"
+allowed_public_cidrs       = ["0.0.0.0/0"]
+control_plane_count        = 3
+worker_count               = 2
+control_plane_instance_type = "t3.large"
+worker_instance_type       = "t3.large"
+kubernetes_version         = "v1.35.0"
+vcluster_version           = "v0.33.1"
+vcluster_name              = "vcluster"
+control_plane_target_port  = 8443
+ubuntu_ami_ssm_parameter_name = "/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
+
+# key_name          = "my-existing-keypair"
+# ssh_allowed_cidrs = ["203.0.113.10/32"]
+# ami_id            = "ami-xxxxxxxxxxxxxxxxx"
+
+tags = {
+  Environment = "dev"
+}

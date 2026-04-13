@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+exec > >(tee /var/log/vcluster-bootstrap.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates
+
+# Ensure Session Manager access works on the private instances.
+snap install amazon-ssm-agent --classic || true
+systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
+
+cat <<EOF >/root/vcluster.yaml
+controlPlane:
+  endpoint: ${load_balancer_dns}:443
+  distro:
+    k8s:
+      version: ${kubernetes_version}
+  backingStore:
+    etcd:
+      embedded:
+        enabled: true
+  advanced:
+    konnectivity:
+      agent:
+        enabled: false
+      server:
+        enabled: false
+networking:
+  podCIDR: 10.64.0.0/16
+  serviceCIDR: 10.128.0.0/16
+EOF
+
+curl -sfL "https://github.com/loft-sh/vcluster/releases/download/${vcluster_version}/install-standalone.sh" -o /root/install-standalone.sh
+chmod +x /root/install-standalone.sh
+
+sh /root/install-standalone.sh \
+  --vcluster-name "${vcluster_name}" \
+  --join-token "${cluster_join_token}" \
+  --config /root/vcluster.yaml
