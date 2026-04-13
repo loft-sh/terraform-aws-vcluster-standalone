@@ -15,18 +15,12 @@ Terraform to create a standalone `vCluster` on AWS EC2 with:
 ```bash
 cat > terraform.tfvars <<'EOF'
 aws_region                  = "eu-central-1"
-project_name                = "vcluster-standalone"
-availability_zone_count     = 1
-allowed_public_cidrs        = ["0.0.0.0/0"]
 control_plane_count         = 3
 worker_count                = 2
 control_plane_instance_type = "t3.large"
 worker_instance_type        = "t3.large"
 kubernetes_version          = "v1.35.0"
 vcluster_version            = "v0.33.1"
-vcluster_name               = "vcluster"
-control_plane_target_port   = 8443
-kubeconfig_parameter_name   = "/vcluster-standalone/kubeconfig"
 EOF
 ```
 
