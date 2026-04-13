@@ -129,6 +129,13 @@ variable "ami_id" {
   nullable    = true
 }
 
+variable "kubeconfig_parameter_name" {
+  description = "Optional SSM Parameter Store name for the exported kubeconfig. When null, /<project_name>/kubeconfig is used."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "cluster_join_token" {
   description = "Optional join token for the cluster. When null, Terraform generates one."
   type        = string

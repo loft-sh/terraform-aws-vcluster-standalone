@@ -4,6 +4,9 @@ set -euo pipefail
 cat <<EOF >/root/vcluster.yaml
 controlPlane:
   endpoint: ${load_balancer_dns}:443
+  proxy:
+    extraSANs:
+    - ${load_balancer_dns}
   distro:
     k8s:
       version: ${kubernetes_version}
@@ -20,6 +23,8 @@ controlPlane:
 networking:
   podCIDR: 10.64.0.0/16
   serviceCIDR: 10.128.0.0/16
+exportKubeConfig:
+  server: https://${load_balancer_dns}:443
 EOF
 
 curl -sfL "https://github.com/loft-sh/vcluster/releases/download/${vcluster_version}/install-standalone.sh" -o /root/install-standalone.sh
@@ -29,3 +34,26 @@ sh /root/install-standalone.sh \
   --vcluster-name "${vcluster_name}" \
   --join-token "${cluster_join_token}" \
   --config /root/vcluster.yaml
+
+for attempt in $(seq 1 120); do
+  if [ -s /var/lib/vcluster/kubeconfig.yaml ]; then
+    break
+  fi
+
+  echo "Waiting for kubeconfig to be written (attempt $${attempt}/120)."
+  sleep 5
+done
+
+if [ ! -s /var/lib/vcluster/kubeconfig.yaml ]; then
+  echo "kubeconfig was not created at /var/lib/vcluster/kubeconfig.yaml" >&2
+  exit 1
+fi
+
+aws ssm put-parameter \
+  --region "${aws_region}" \
+  --name "${kubeconfig_parameter_name}" \
+  --type "SecureString" \
+  --tier "Advanced" \
+  --overwrite \
+  --value "$(cat /var/lib/vcluster/kubeconfig.yaml)"
+

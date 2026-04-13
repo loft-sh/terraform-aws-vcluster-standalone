@@ -10,6 +10,8 @@ data "aws_ssm_parameter" "ubuntu_ami" {
   name = var.ubuntu_ami_ssm_parameter_name
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "ec2_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -18,6 +20,18 @@ data "aws_iam_policy_document" "ec2_assume_role" {
       type        = "Service"
       identifiers = ["ec2.amazonaws.com"]
     }
+  }
+}
+
+data "aws_iam_policy_document" "kubeconfig_parameter_write" {
+  statement {
+    actions = [
+      "ssm:PutParameter",
+    ]
+
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter${local.kubeconfig_parameter_name}",
+    ]
   }
 }
 
@@ -54,6 +68,10 @@ locals {
 
   resource_name_prefix = substr(replace(var.project_name, "_", "-"), 0, 20)
   selected_ami_id      = coalesce(var.ami_id, data.aws_ssm_parameter.ubuntu_ami.value)
+  kubeconfig_parameter_name = coalesce(
+    var.kubeconfig_parameter_name,
+    "/${var.project_name}/kubeconfig",
+  )
 }
 
 resource "aws_vpc" "main" {
@@ -306,6 +324,12 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy" "kubeconfig_parameter_write" {
+  name   = "${local.resource_name_prefix}-kubeconfig-parameter"
+  role   = aws_iam_role.ec2.id
+  policy = data.aws_iam_policy_document.kubeconfig_parameter_write.json
+}
+
 resource "aws_iam_instance_profile" "ec2" {
   name = "${local.resource_name_prefix}-ec2-profile"
   role = aws_iam_role.ec2.name
@@ -323,11 +347,13 @@ resource "aws_instance" "control_plane_bootstrap" {
   user_data_replace_on_change = true
 
   user_data = templatefile("${path.module}/templates/control-plane-bootstrap.sh.tftpl", {
-    cluster_join_token = local.cluster_join_token
-    kubernetes_version = var.kubernetes_version
-    load_balancer_dns  = aws_lb.control_plane.dns_name
-    vcluster_name      = var.vcluster_name
-    vcluster_version   = var.vcluster_version
+    aws_region                = var.aws_region
+    cluster_join_token        = local.cluster_join_token
+    kubeconfig_parameter_name = local.kubeconfig_parameter_name
+    kubernetes_version        = var.kubernetes_version
+    load_balancer_dns         = aws_lb.control_plane.dns_name
+    vcluster_name             = var.vcluster_name
+    vcluster_version          = var.vcluster_version
   })
 
   root_block_device {

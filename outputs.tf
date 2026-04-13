@@ -28,3 +28,8 @@ output "cluster_join_token" {
   value       = local.cluster_join_token
   sensitive   = true
 }
+
+output "kubeconfig_parameter_name" {
+  description = "SSM Parameter Store name containing the exported kubeconfig."
+  value       = local.kubeconfig_parameter_name
+}
