@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Prefix used for naming AWS resources."
   type        = string
-  default     = "vcluster-standalone"
+  default     = "vcluster"
 }
 
 variable "availability_zone_count" {
@@ -49,7 +49,7 @@ variable "ssh_allowed_cidrs" {
 variable "control_plane_count" {
   description = "Total number of control plane nodes, including the bootstrap node."
   type        = number
-  default     = 3
+  default     = 1
 
   validation {
     condition     = var.control_plane_count >= 1
@@ -60,7 +60,7 @@ variable "control_plane_count" {
 variable "worker_count" {
   description = "Number of worker nodes."
   type        = number
-  default     = 2
+  default     = 3
 
   validation {
     condition     = var.worker_count >= 0
@@ -89,7 +89,7 @@ variable "control_plane_root_volume_size_gb" {
 variable "worker_root_volume_size_gb" {
   description = "Root EBS volume size for worker nodes."
   type        = number
-  default     = 50
+  default     = 100
 }
 
 variable "kubernetes_version" {

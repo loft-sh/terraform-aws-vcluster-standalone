@@ -33,3 +33,8 @@ output "kubeconfig_parameter_name" {
   description = "SSM Parameter Store name containing the exported kubeconfig."
   value       = local.kubeconfig_parameter_name
 }
+
+output "kubeconfig_retrieval_command" {
+  description = "Command to retrieve the kubeconfig from SSM Parameter Store after apply."
+  value       = "aws ssm get-parameter --region ${var.aws_region} --name '${local.kubeconfig_parameter_name}' --with-decryption --query 'Parameter.Value' --output text > kubeconfig.yaml"
+}

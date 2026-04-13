@@ -5,3 +5,4 @@ crash.log
 terraform.tfvars
 *.tfvars
 !terraform.tfvars.example
+/kubeconfig.yaml

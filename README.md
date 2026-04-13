@@ -50,17 +50,19 @@ terraform apply
 terraform output cluster_endpoint
 ```
 
-5. Retrieve the kubeconfig from Parameter Store:
+5. Retrieve the kubeconfig from Parameter Store using the command Terraform prints after `apply`:
 
 ```bash
-aws ssm get-parameter \
-  --name "$(terraform output -raw kubeconfig_parameter_name)" \
-  --with-decryption \
-  --query 'Parameter.Value' \
-  --output text > kubeconfig.yaml
+terraform output -raw kubeconfig_retrieval_command
 ```
 
-6. Use the kubeconfig:
+6. Run it:
+
+```bash
+eval "$(terraform output -raw kubeconfig_retrieval_command)"
+```
+
+7. Use the kubeconfig:
 
 ```bash
 KUBECONFIG=./kubeconfig.yaml kubectl get nodes
@@ -143,6 +145,7 @@ Useful outputs after apply:
 - `worker_private_ips`
 - `cluster_join_token`
 - `kubeconfig_parameter_name`
+- `kubeconfig_retrieval_command`
 
 List them with:
 

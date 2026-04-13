@@ -1,7 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+ensure_aws_cli() {
+  if command -v aws >/dev/null 2>&1; then
+    return 0
+  fi
+
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update
+  apt-get install -y awscli
+}
+
 cat <<EOF >/root/vcluster.yaml
+exportKubeConfig:
+  server: https://${load_balancer_dns}:443
 controlPlane:
   endpoint: ${load_balancer_dns}:443
   proxy:
@@ -23,8 +35,6 @@ controlPlane:
 networking:
   podCIDR: 10.64.0.0/16
   serviceCIDR: 10.128.0.0/16
-exportKubeConfig:
-  server: https://${load_balancer_dns}:443
 EOF
 
 curl -sfL "https://github.com/loft-sh/vcluster/releases/download/${vcluster_version}/install-standalone.sh" -o /root/install-standalone.sh
@@ -49,6 +59,8 @@ if [ ! -s /var/lib/vcluster/kubeconfig.yaml ]; then
   exit 1
 fi
 
+ensure_aws_cli
+
 aws ssm put-parameter \
   --region "${aws_region}" \
   --name "${kubeconfig_parameter_name}" \
@@ -56,4 +68,3 @@ aws ssm put-parameter \
   --tier "Advanced" \
   --overwrite \
   --value "$(cat /var/lib/vcluster/kubeconfig.yaml)"
-
