@@ -23,14 +23,7 @@ kubernetes_version          = "v1.35.0"
 vcluster_version            = "v0.33.1"
 EOF
 ```
-
-2. Adjust `terraform.tfvars` if needed:
-
-- `aws_region`
-- `allowed_public_cidrs`
-- node counts and instance types if you want something other than the defaults
-
-3. Deploy:
+2. Deploy:
 
 ```bash
 terraform init
@@ -38,25 +31,13 @@ terraform plan
 terraform apply
 ```
 
-4. Get the cluster endpoint:
-
-```bash
-terraform output cluster_endpoint
-```
-
-5. Retrieve the kubeconfig from Parameter Store using the command Terraform prints after `apply`:
-
-```bash
-terraform output -raw kubeconfig_retrieval_command
-```
-
-6. Run it:
+3. Retrieve the kubeconfig from Parameter Store using the command Terraform prints after `apply`:
 
 ```bash
 eval "$(terraform output -raw kubeconfig_retrieval_command)"
 ```
 
-7. Use the kubeconfig:
+4. Use the kubeconfig:
 
 ```bash
 KUBECONFIG=./kubeconfig.yaml kubectl get nodes
