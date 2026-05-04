@@ -20,7 +20,7 @@ worker_count                = 2
 control_plane_instance_type = "t3.large"
 worker_instance_type        = "t3.large"
 kubernetes_version          = "v1.35.0"
-vcluster_version            = "v0.33.1"
+vcluster_version            = "v0.34.0"
 EOF
 ```
 2. Deploy:
