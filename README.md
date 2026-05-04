@@ -100,7 +100,7 @@ The most relevant variables are:
 | `control_plane_instance_type` | `t3.large` | Control-plane EC2 size |
 | `worker_instance_type` | `t3.large` | Worker EC2 size |
 | `kubernetes_version` | `v1.35.0` | Kubernetes version passed to vCluster |
-| `vcluster_version` | `v0.33.1` | vCluster standalone version |
+| `vcluster_version` | `v0.34.0` | vCluster standalone version |
 | `control_plane_target_port` | `8443` | Port exposed on the control-plane instances |
 | `kubeconfig_parameter_name` | `"/vcluster-standalone/kubeconfig"` | Advanced `SecureString` parameter used for kubeconfig retrieval |
 | `ami_id` | `null` | Optional AMI override |
