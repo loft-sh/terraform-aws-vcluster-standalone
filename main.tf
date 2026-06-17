@@ -10,6 +10,10 @@ data "aws_ssm_parameter" "ubuntu_ami" {
   name = var.ubuntu_ami_ssm_parameter_name
 }
 
+data "aws_ssm_parameter" "ubuntu_arm_ami" {
+  name = var.ubuntu_arm_ami_ssm_parameter_name
+}
+
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "ec2_assume_role" {
@@ -68,6 +72,7 @@ locals {
 
   resource_name_prefix = substr(replace(var.project_name, "_", "-"), 0, 20)
   selected_ami_id      = coalesce(var.ami_id, data.aws_ssm_parameter.ubuntu_ami.value)
+  selected_arm_ami_id  = coalesce(var.arm_ami_id, data.aws_ssm_parameter.ubuntu_arm_ami.value)
   kubeconfig_parameter_name = coalesce(
     var.kubeconfig_parameter_name,
     "/${var.project_name}/kubeconfig",
@@ -437,6 +442,44 @@ resource "aws_instance" "worker" {
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-worker-${count.index + 1}"
     Role = "worker"
+  })
+
+  depends_on = [aws_instance.control_plane_bootstrap]
+  cpu_options {
+    nested_virtualization = contains(["c8i", "m8i", "r8i"], split(".", var.worker_instance_type)[0] ) ? "enabled" : "disabled"
+  }
+}
+
+resource "aws_instance" "worker_arm" {
+  count = var.arm_worker_count
+
+  ami                         = local.selected_arm_ami_id
+  instance_type               = var.arm_worker_instance_type
+  subnet_id                   = aws_subnet.worker[count.index % local.az_count].id
+  vpc_security_group_ids      = [aws_security_group.worker.id]
+  key_name                    = var.key_name
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  user_data_replace_on_change = true
+
+  user_data = templatefile("${path.module}/templates/worker-join.sh.tftpl", {
+    cluster_join_token = local.cluster_join_token
+    load_balancer_dns  = aws_lb.control_plane.dns_name
+  })
+
+  root_block_device {
+    volume_size           = var.worker_root_volume_size_gb
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-worker-arm-${count.index + 1}"
+    Role = "worker"
+    Arch = "arm64"
   })
 
   depends_on = [aws_instance.control_plane_bootstrap]

@@ -23,6 +23,11 @@ output "worker_private_ips" {
   value       = aws_instance.worker[*].private_ip
 }
 
+output "arm_worker_private_ips" {
+  description = "Private IPs of the ARM (arm64) worker nodes."
+  value       = aws_instance.worker_arm[*].private_ip
+}
+
 output "cluster_join_token" {
   description = "Join token used to bootstrap the standalone cluster."
   value       = local.cluster_join_token

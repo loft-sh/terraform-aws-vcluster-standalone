@@ -5,7 +5,7 @@ Terraform to create a standalone `vCluster` on AWS EC2 with:
 - a dedicated VPC
 - one public Network Load Balancer
 - private control-plane nodes
-- private worker nodes
+- private worker nodes (x86_64 and optional arm64)
 - SSM access to the instances
 
 ## Quickstart
@@ -19,6 +19,8 @@ control_plane_count         = 3
 worker_count                = 2
 control_plane_instance_type = "t3.large"
 worker_instance_type        = "t3.large"
+arm_worker_count            = 0
+arm_worker_instance_type    = "a1.metal"
 kubernetes_version          = "v1.35.0"
 vcluster_version            = "v0.34.0"
 EOF
@@ -54,7 +56,8 @@ KUBECONFIG=./kubeconfig.yaml kubectl get nodes
 - one public Network Load Balancer
 - one bootstrap control-plane node
 - additional control-plane nodes
-- worker nodes
+- worker nodes (x86_64)
+- optional arm64 worker nodes
 - one EC2 IAM role with `AmazonSSMManagedInstanceCore`
 - one advanced `SecureString` parameter containing the kubeconfig
 
@@ -96,14 +99,17 @@ The most relevant variables are:
 | `availability_zone_count` | `1` | Number of AZs used for subnet creation |
 | `allowed_public_cidrs` | `["0.0.0.0/0"]` | CIDRs allowed to reach the public NLB |
 | `control_plane_count` | `3` | Total control-plane nodes including bootstrap node |
-| `worker_count` | `2` | Worker node count |
+| `worker_count` | `2` | x86_64 worker node count |
+| `arm_worker_count` | `0` | arm64 worker node count |
 | `control_plane_instance_type` | `t3.large` | Control-plane EC2 size |
-| `worker_instance_type` | `t3.large` | Worker EC2 size |
+| `worker_instance_type` | `t3.large` | x86_64 worker EC2 size |
+| `arm_worker_instance_type` | `a1.metal` | arm64 worker EC2 size |
 | `kubernetes_version` | `v1.35.0` | Kubernetes version passed to vCluster |
 | `vcluster_version` | `v0.34.0` | vCluster standalone version |
 | `control_plane_target_port` | `8443` | Port exposed on the control-plane instances |
 | `kubeconfig_parameter_name` | `"/vcluster-standalone/kubeconfig"` | Advanced `SecureString` parameter used for kubeconfig retrieval |
-| `ami_id` | `null` | Optional AMI override |
+| `ami_id` | `null` | Optional x86_64 AMI override |
+| `arm_ami_id` | `null` | Optional arm64 AMI override |
 | `key_name` | `null` | Optional SSH key pair |
 | `ssh_allowed_cidrs` | `[]` | Optional SSH ingress ranges |
 
@@ -118,6 +124,7 @@ Useful outputs after apply:
 - `vpc_id`
 - `control_plane_private_ips`
 - `worker_private_ips`
+- `arm_worker_private_ips`
 - `cluster_join_token`
 - `kubeconfig_parameter_name`
 - `kubeconfig_retrieval_command`
@@ -132,7 +139,8 @@ terraform output
 
 - Instances do not get public IPs.
 - SSH is optional, but SSM is the intended access path.
-- The AMI defaults to Canonical Ubuntu 22.04 via public SSM parameter lookup.
+- The AMI defaults to Canonical Ubuntu 22.04 via public SSM parameter lookup, with separate lookups for x86_64 (`worker_count`) and arm64 (`arm_worker_count`) workers.
+- arm64 workers are disabled by default (`arm_worker_count = 0`) and join the same cluster as the x86_64 workers; they are tagged `Arch = arm64`.
 - The bootstrap scripts ensure SSM Agent is present and running.
 - The kubeconfig is published by the bootstrap control-plane node into Parameter Store as an advanced `SecureString`.
 - The NAT gateway is single-instance, so this is not a highly available network design across AZ failure.
