@@ -68,6 +68,17 @@ variable "worker_count" {
   }
 }
 
+variable "arm_worker_count" {
+  description = "Number of ARM (arm64) worker nodes."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.arm_worker_count >= 0
+    error_message = "arm_worker_count must be 0 or greater."
+  }
+}
+
 variable "control_plane_instance_type" {
   description = "EC2 instance type for control plane nodes."
   type        = string
@@ -78,6 +89,12 @@ variable "worker_instance_type" {
   description = "EC2 instance type for worker nodes."
   type        = string
   default     = "t3.large"
+}
+
+variable "arm_worker_instance_type" {
+  description = "EC2 instance type for ARM (arm64) worker nodes."
+  type        = string
+  default     = "a1.metal"
 }
 
 variable "control_plane_root_volume_size_gb" {
@@ -124,6 +141,19 @@ variable "ubuntu_ami_ssm_parameter_name" {
 
 variable "ami_id" {
   description = "Optional AMI ID override for all EC2 instances. When null, the Ubuntu AMI is looked up via SSM."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "ubuntu_arm_ami_ssm_parameter_name" {
+  description = "SSM parameter name used to resolve the arm64 Ubuntu AMI for ARM worker nodes. Set arm_ami_id directly to bypass SSM lookup."
+  type        = string
+  default     = "/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"
+}
+
+variable "arm_ami_id" {
+  description = "Optional AMI ID override for ARM worker instances. When null, the arm64 Ubuntu AMI is looked up via SSM."
   type        = string
   default     = null
   nullable    = true
