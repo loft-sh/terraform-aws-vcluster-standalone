@@ -8,7 +8,22 @@ ensure_aws_cli() {
 
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get install -y awscli
+  apt-get install -y curl unzip
+
+  case "$(uname -m)" in
+    x86_64) aws_cli_arch="x86_64" ;;
+    aarch64 | arm64) aws_cli_arch="aarch64" ;;
+    *)
+      echo "unsupported architecture for AWS CLI install: $(uname -m)" >&2
+      exit 1
+      ;;
+  esac
+
+  tmp_dir="$(mktemp -d)"
+  curl -sfL "https://awscli.amazonaws.com/awscli-exe-linux-$${aws_cli_arch}.zip" -o "$${tmp_dir}/awscliv2.zip"
+  unzip -q "$${tmp_dir}/awscliv2.zip" -d "$${tmp_dir}"
+  "$${tmp_dir}/aws/install"
+  rm -rf "$${tmp_dir}"
 }
 
 cat <<EOF >/root/vcluster.yaml

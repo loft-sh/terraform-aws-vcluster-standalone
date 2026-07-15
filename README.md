@@ -19,10 +19,8 @@ control_plane_count         = 3
 worker_count                = 2
 control_plane_instance_type = "t3.large"
 worker_instance_type        = "t3.large"
-arm_worker_count            = 0
-arm_worker_instance_type    = "a1.metal"
-kubernetes_version          = "v1.35.0"
-vcluster_version            = "v0.34.0"
+kubernetes_version          = "v1.35.6"
+vcluster_version            = "v0.35.1"
 EOF
 ```
 2. Deploy:
@@ -38,6 +36,8 @@ terraform apply
 ```bash
 eval "$(terraform output -raw kubeconfig_retrieval_command)"
 ```
+
+> If you get "ParameterNotFound" errors, it might take a couple of minutes until the kubeconfig is uploaded
 
 4. Use the kubeconfig:
 
@@ -83,7 +83,7 @@ If you want to find instance IDs by tag:
 
 ```bash
 aws ec2 describe-instances \
-  --filters "Name=tag:Name,Values=vcluster-standalone-*" "Name=instance-state-name,Values=running" \
+  --filters "Name=tag:Name,Values=vcluster-*" "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[].{Name:Tags[?Key==`Name`]|[0].Value,InstanceId:InstanceId,PrivateIp:PrivateIpAddress}' \
   --output table
 ```
@@ -95,19 +95,23 @@ The most relevant variables are:
 | Variable | Default | Notes |
 | --- | --- | --- |
 | `aws_region` | `eu-central-1` | AWS region |
-| `project_name` | `vcluster-standalone` | Prefix for resource names |
+| `project_name` | `vcluster` | Prefix for resource names |
 | `availability_zone_count` | `1` | Number of AZs used for subnet creation |
+| `vpc_cidr` | `10.0.0.0/16` | CIDR block for the VPC |
 | `allowed_public_cidrs` | `["0.0.0.0/0"]` | CIDRs allowed to reach the public NLB |
-| `control_plane_count` | `3` | Total control-plane nodes including bootstrap node |
-| `worker_count` | `2` | x86_64 worker node count |
+| `control_plane_count` | `1` | Total control-plane nodes including bootstrap node |
+| `worker_count` | `3` | x86_64 worker node count |
 | `arm_worker_count` | `0` | arm64 worker node count |
 | `control_plane_instance_type` | `t3.large` | Control-plane EC2 size |
 | `worker_instance_type` | `t3.large` | x86_64 worker EC2 size |
 | `arm_worker_instance_type` | `a1.metal` | arm64 worker EC2 size |
-| `kubernetes_version` | `v1.35.0` | Kubernetes version passed to vCluster |
-| `vcluster_version` | `v0.34.0` | vCluster standalone version |
+| `control_plane_root_volume_size_gb` | `50` | Control-plane root EBS volume size |
+| `worker_root_volume_size_gb` | `100` | Worker root EBS volume size |
+| `kubernetes_version` | `v1.35.6` | Kubernetes version passed to vCluster |
+| `vcluster_version` | `v0.35.1` | vCluster standalone version |
+| `vcluster_name` | `vcluster` | Name of the standalone cluster |
 | `control_plane_target_port` | `8443` | Port exposed on the control-plane instances |
-| `kubeconfig_parameter_name` | `"/vcluster-standalone/kubeconfig"` | Advanced `SecureString` parameter used for kubeconfig retrieval |
+| `kubeconfig_parameter_name` | `null` | Defaults to `/<project_name>/kubeconfig`; advanced `SecureString` used for kubeconfig retrieval |
 | `ami_id` | `null` | Optional x86_64 AMI override |
 | `arm_ami_id` | `null` | Optional arm64 AMI override |
 | `key_name` | `null` | Optional SSH key pair |
@@ -139,7 +143,7 @@ terraform output
 
 - Instances do not get public IPs.
 - SSH is optional, but SSM is the intended access path.
-- The AMI defaults to Canonical Ubuntu 22.04 via public SSM parameter lookup, with separate lookups for x86_64 (`worker_count`) and arm64 (`arm_worker_count`) workers.
+- The AMI defaults to Canonical Ubuntu 24.04 via public SSM parameter lookup, with separate lookups for x86_64 (`worker_count`) and arm64 (`arm_worker_count`) workers.
 - arm64 workers are disabled by default (`arm_worker_count = 0`) and join the same cluster as the x86_64 workers; they are tagged `Arch = arm64`.
 - The bootstrap scripts ensure SSM Agent is present and running.
 - The kubeconfig is published by the bootstrap control-plane node into Parameter Store as an advanced `SecureString`.

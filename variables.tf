@@ -112,13 +112,13 @@ variable "worker_root_volume_size_gb" {
 variable "kubernetes_version" {
   description = "Kubernetes version passed to the standalone vCluster installer."
   type        = string
-  default     = "v1.35.0"
+  default     = "v1.35.6"
 }
 
 variable "vcluster_version" {
   description = "vCluster standalone release version."
   type        = string
-  default     = "v0.33.1"
+  default     = "v0.35.1"
 }
 
 variable "vcluster_name" {
@@ -136,7 +136,7 @@ variable "control_plane_target_port" {
 variable "ubuntu_ami_ssm_parameter_name" {
   description = "SSM parameter name used to resolve the Ubuntu AMI. Set ami_id directly if you want to bypass SSM lookup."
   type        = string
-  default     = "/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
+  default     = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }
 
 variable "ami_id" {
@@ -149,7 +149,7 @@ variable "ami_id" {
 variable "ubuntu_arm_ami_ssm_parameter_name" {
   description = "SSM parameter name used to resolve the arm64 Ubuntu AMI for ARM worker nodes. Set arm_ami_id directly to bypass SSM lookup."
   type        = string
-  default     = "/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id"
+  default     = "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id"
 }
 
 variable "arm_ami_id" {
